@@ -5,7 +5,7 @@ from app.services.vector_service import vector_store
 from app.core.config import get_settings
 settings = get_settings()
 
-# In-memory storage (replace with DB later)
+# In-memory storage 
 VECTOR_STORE = {
     "index": None,  # FAISS index
     "chunks": [],   # List of text chunks
@@ -35,7 +35,7 @@ class SimpleRAGService:
         - "Tell me more" → "Tell me more about [previous topic]"
         """
         if not conversation_history or len(conversation_history) == 0:
-            # No history, return query as-is
+            # No history, 
             return query
         
         # Build conversation context
@@ -61,10 +61,10 @@ Return ONLY the query (original or rewritten), nothing else.
 Rewritten Query:"""
 
         response = await client.chat.completions.create(
-            model="gpt-4o",  # Use faster model for query rewriting
+            model=settings.LLM_MODEL,
             messages=[{"role": "user", "content": rewrite_prompt}],
-            temperature=0.3,
-            max_tokens=200
+            temperature=settings.TEMPERATURE,
+            max_tokens=settings.MAX_TOKENS
         )
         
         rewritten_query = response.choices[0].message.content.strip()
@@ -118,8 +118,8 @@ Please let the user know that you don't have information about this in the uploa
         response = await client.chat.completions.create(
             model="gpt-4-turbo-preview",
             messages=messages,
-            temperature=0.7,
-            max_tokens=1000
+            temperature=settings.TEMPERATURE,
+            max_tokens=settings.MAX_TOKENS
         )
         
         return response.choices[0].message.content

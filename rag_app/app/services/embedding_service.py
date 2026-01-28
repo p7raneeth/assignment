@@ -30,8 +30,8 @@ class VectorStoreService:
     def initialize_index(self):
         """Initialize FAISS index"""
         if self.index is None:
-            self.index = faiss.IndexFlatIP(self.dimension)  # Inner product for cosine similarity
-    
+            self.index = faiss.IndexFlatIP(self.dimension)  
+            
     def add_documents(self, chunks: List[str], embeddings: List[List[float]], metadata: List[dict]):
         """Add documents to the vector store"""
         self.initialize_index()

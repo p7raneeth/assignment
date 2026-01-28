@@ -9,16 +9,15 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str
     EMBEDDING_MODEL: str = "text-embedding-3-small"
-    EMBEDDING_MODEL_DIM: str = 1536
+    EMBEDDING_MODEL_DIM: int = 1536
     LLM_MODEL: str = "gpt-4o"
-    TEMPERATURE : str = 0.1
-    MAX_TOKENS: str = 200
+    TEMPERATURE : float = 0.1
+    MAX_TOKENS: int = 200
     
     # RAG Configuration
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200
     TOP_K_RETRIEVAL: int = 5
-    HYBRID_SEARCH_ALPHA: float = 0.5  # 0.5 = equal weight to dense and sparse
     
     # Conversation
     MAX_HISTORY_MESSAGES: int = 1  # Include 1 previous message
