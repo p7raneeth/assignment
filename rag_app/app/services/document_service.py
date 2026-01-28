@@ -3,7 +3,7 @@ from typing import List, Optional
 import io, os
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
-
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 load_dotenv()
 
 
@@ -15,7 +15,15 @@ class DocumentProcessor:
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
-    
+        # Initialize LangChain's RecursiveCharacterTextSplitter
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+            length_function=len,
+            separators=["\n\n", "\n", ". ", " ", ""],  # Try to split on paragraphs, then sentences, then words
+            is_separator_regex=False,
+        )
+
     def extract_text_from_pdf(self, pdf_content: bytes) -> List[tuple]:
         """Extract text from PDF with page numbers"""
         pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_content))
@@ -29,28 +37,18 @@ class DocumentProcessor:
         return texts
     
     def chunk_text(self, text: str) -> List[str]:
-        """Split text into overlapping chunks"""
-        chunks = []
-        start = 0
+        """
+        Split text into overlapping chunks using LangChain's RecursiveCharacterTextSplitter
         
-        while start < len(text):
-            end = start + self.chunk_size
-            chunk = text[start:end]
-            
-            # Try to break at sentence boundary
-            if end < len(text):
-                last_period = chunk.rfind('.')
-                last_newline = chunk.rfind('\n')
-                break_point = max(last_period, last_newline)
-                
-                if break_point > self.chunk_size * 0.5:
-                    chunk = chunk[:break_point + 1]
-                    end = start + break_point + 1
-            
-            chunks.append(chunk.strip())
-            start = end - self.chunk_overlap
-        
-        return [c for c in chunks if c]
+        This splitter tries to keep semantically related text together by:
+        1. First trying to split on double newlines (paragraphs)
+        2. Then single newlines
+        3. Then sentences (periods followed by space)
+        4. Then words (spaces)
+        5. Finally individual characters as last resort
+        """
+        chunks = self.text_splitter.split_text(text)
+        return chunks
     
     async def process_pdf(self, pdf_content: bytes, filename: str) -> dict:
         """Process PDF: extract, chunk, embed"""
