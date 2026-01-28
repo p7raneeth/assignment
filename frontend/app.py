@@ -4,9 +4,9 @@ from api_client import upload_pdf, query_rag
 from components import render_chat, render_sources
 from config import UPLOAD_ENDPOINT, QUERY_ENDPOINT
 
-st.set_page_config(page_title="RAG Chatbot", layout="wide")
+st.set_page_config(page_title="PDF QA Chatbot", layout="wide")
 
-st.title("📚 RAG Chatbot")
+st.title("📄 PDF QA Chatbot")
 
 # -------------------------------
 # Session state
