@@ -1,0 +1,8 @@
+rag_app/venv/*
+rag_app/.env.*
+rag_app/__pycache__/
+rag_app/.mypy_cache/
+rag_app/.python-version/
+frontend/__pycache__/api_client.cpython-39.pyc
+frontend/__pycache__/components.cpython-39.pyc
+frontend/__pycache__/config.cpython-39.pyc
