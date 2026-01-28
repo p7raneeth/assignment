@@ -314,6 +314,7 @@ context would be fetched and sent to llm to generate the answer
   - user management, user login/authentication 
   - implemented alembic migration to track database changes
   - used an opensource llm and deployed it as a seperate micro-service
+  - containerized the application using docker and published the docker images for deployment
 
 7. Architectural decisions, Tradeoffs
 
