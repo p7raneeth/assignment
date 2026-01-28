@@ -54,8 +54,8 @@ uv --version
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/rag-qa-chatbot.git
-cd rag-qa-chatbot
+git clone https://github.com/p7raneeth/assignment.git
+cd assignment
 ```
 
 ### 3. Sync Dependencies with UV
