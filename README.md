@@ -280,3 +280,142 @@ Configuration can be modified in `.env` or `app/core/config.py`:
 ```
 
 
+```
+## Requirements to Productionize the solution
+
+1. procure a compute instance. e.g. Azure web apps to deploy front end and backend seperately with multiple slots
+   each for dev --> stage --> prod environments
+2. setup Github actions CI/CD pipeline by configuring a .yaml script which triggers a deployement to the app service
+   whenever a new changes is commited to a configured branch e.g.  main, it can be triggered to any branch
+3. Docker file to create a docker image and deploy the docker image instead of publishing the whole code
+
+```
+
+```
+## Design Requirements
+
+1. As a vanilla solution, I have chosen to use RCTS (Recursive Character Text Splitter) for chunking the data which uses a series of delimeters like \n\n which chunks paragraphs, followed by sentences, words, characters and 
+2. based on the similarity of the question which any of the chunked data and also basis the top-k parameter. semantically similar 
+context would be fetched and sent to llm to generate the answer
+3. choice of LLM 
+  - LLM : gpt-4o
+  - Embedding model : text-embedding-3-small
+  - vector database : FAISS
+  - prompt : few shot prompting
+4. Engineering standards followed 
+5. AI Tools used : ChatGPT for syntactical help
+6. With more time, I would have 
+  - productionalized the whole app on azure. made it scalable to atleast a throughput of 50 QPM with a p90 latenct of 3-4 seconds approx. 
+  - implemented observability to monitor the metrics (application performance)
+  - implemented a better Chunking mechanism (BPE)
+  - experimented with better prompting techniques like chain-of-thoughts
+  - prompt chaching to reduce token consumption
+  - tried parallazation where function execution is not sequential, to increase the performance
+  - user management, user login/authentication 
+  - implemented alembic migration to track database changes
+  - used an opensource llm and deployed it as a seperate micro-service
+
+7. Architectural decisions, Tradeoffs
+
+  Follow-up handling via LLM rewriting - Enables natural conversation
+  RecursiveCharacterTextSplitter - Better chunk quality than manual splitting
+  Dual-source answering - RAG + conversation = comprehensive responses
+  In-memory FAISS - Fast prototyping, easy to migrate later
+  Config-driven design - Production-ready PoV (parameterization)
+  Stateless API - Scalable - client manages history
+  No Database - Easy to start but no persistence - no user management
+  vector db - FAISS - low latency, simple to setup - no persistance - lost on restart
+  LLM choice - OpenAI due to high quality generated outputs  - vendor lock-in - requires internet to chat with docs even locally (as it is an API call)
+
+```
+
+```
+High level Architecture
+┌─────────────────────────────────────────────────────────────────┐
+│                          USER / FRONTEND  (Streamlit)           │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                         FASTAPI BACKEND                         │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                    API ROUTES                            │   │
+│  │  • POST /documents/upload  (Upload PDF)                  │   │
+│  │  • POST /messages/query        (Ask Questions)           │   | 
+│  └──────────────┬─────────────────────┬─────────────────────┘   │
+│                 │                      │                        │
+│                 ▼                      ▼                        │
+│  ┌──────────────────────┐  ┌─────────────────────────────────   │
+│  │  DOCUMENT SERVICE    │  │     RAG SERVICE                 │  │
+│  │                      │  │                                 │  │
+│  │  1. Extract PDF text │  │  1. Rewrite follow-up query     │  │
+│  │  2. Chunk text       │  │  2. Search vector DB            │  │
+│  │  3. Generate embed   │  │  3. Build prompt                │  │
+│  │  4. Store in vector  │  │  4. Call LLM & Generates result │  │      
+│  └──────────────────────┘  └──────────────────────────────────  │
+│                 │                      │                        │
+│                 ▼                      ▼                        │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              STORAGE & SERVICES LAYER                    │   │
+│  │                                                          │   │
+│  │  ┌─────────────┐  ┌──────────────┐  ┌────────────────┐   │   │
+│  │  │ FAISS Index │  │ OpenAI API   │  │ In-Memory      │   │   │
+│  │  │             │  │              │  │ Chunks Storage │   │   │
+│  │  │ • Embeddings│  │ • Embeddings │  │                │   │   │
+│  │  │ • Search    │  │ • GPT-4      │  │ • Text chunks  │   │   │
+│  │  │             │  │              │  │ • Metadata     │   │   │
+│  │  └─────────────┘  └──────────────┘  └────────────────┘   │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+```
+Engineering Standards followed: 
+
+1. Code Organization & Architecture
+
+ - Separation of Concerns - Routes, services, schemas, and config in separate layers
+ - Single Responsibility Principle - Each service handles one domain (doc processing, embeddings, RAG)
+ - Dependency Injection - Services use get_settings() for configuration
+ - Modular Design - Easy to swap FAISS → Pinecone without touching routes
+
+2. API Design Standards
+
+ - RESTful conventions - Proper HTTP verbs (POST for creation, GET for retrieval)
+ - Semantic status codes - HTTP_201_CREATED, HTTP_400_BAD_REQUEST instead of numbers
+ - Consistent response formats - Pydantic schemas ensure uniform JSON structures
+ - API versioning ready - Prefix structure allows /api/v1/ additions
+ - Self-documenting - Auto-generated OpenAPI/Swagger docs
+
+3. Type Safety & Validation
+
+ - Type hints everywhere - All functions have input/output types
+ - Pydantic validation - Request/response validation at API boundaries
+ - Config validation - Settings validated on startup, fails fast if misconfigured
+ - Runtime type checking - Pydantic catches type errors before they reach code
+
+4. Error Handling
+
+ - Graceful degradation - Specific exception handling for different error types
+ - Client-friendly errors - Clear error messages ("File size exceeds 10MB" vs "Error 400")
+
+5. Dependency Management
+
+ - Lock file committed - uv.lock ensures reproducible builds
+ - Modern tooling - UV for faster, more reliable dependency resolution
+
+6. Documentation Standards
+
+ - README with setup - Clear onboarding for new developers
+ - API documentation - Auto-generated Swagger UI
+ - Architecture diagrams - Visual overview of system
+
+7. Git & Version Control
+
+ - Meaningful commits - Descriptive commit messages
+ - Branch strategy - Dev → Main workflow
+ - .gitignore properly configured - No venv, secrets, or cache in repo
+ - Lock files committed - Reproducible environments
+
+```
