@@ -20,6 +20,54 @@ class SimpleRAGService:
         """Retrieve relevant context using vector search"""
         return await vector_store.search(query, top_k)
     
+    async def _resolve_followup_query(
+        self, 
+        query: str, 
+        conversation_history: List[dict]
+    ) -> str:
+        """
+        Use LLM to rewrite follow-up questions with context from conversation history.
+        
+        Examples:
+        - "What about Mumbai?" → "What are important facts about Mumbai in the context of Indian cities?"
+        - "Tell me more" → "Tell me more about [previous topic]"
+        """
+        if not conversation_history or len(conversation_history) == 0:
+            # No history, return query as-is
+            return query
+        
+        # Build conversation context
+        history_text = "\n".join([
+            f"{msg['role'].upper()}: {msg['content']}" 
+            for msg in conversation_history[-4:]  # Last 2 exchanges (4 messages)
+        ])
+        
+        # Ask LLM to rewrite the query if it's a follow-up
+        rewrite_prompt = f"""Given the conversation history below, determine if the current query is a follow-up question that needs context from the conversation.
+
+Conversation History:
+{history_text}
+
+Current Query: {query}
+
+Task:
+1. If this is a standalone question (not referencing previous context), return it exactly as-is.
+2. If this is a follow-up question (uses pronouns like "it", "that", "they" or references previous context), rewrite it to be self-contained by incorporating relevant context from the conversation history.
+
+Return ONLY the query (original or rewritten), nothing else.
+
+Rewritten Query:"""
+
+        response = await client.chat.completions.create(
+            model="gpt-4o",  # Use faster model for query rewriting
+            messages=[{"role": "user", "content": rewrite_prompt}],
+            temperature=0.3,
+            max_tokens=200
+        )
+        
+        rewritten_query = response.choices[0].message.content.strip()
+        return rewritten_query
+    
     async def generate_answer(
         self, 
         query: str, 

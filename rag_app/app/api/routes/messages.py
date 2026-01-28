@@ -41,9 +41,15 @@ async def query_endpoint(request: QueryRequest):
     }
     """
     try:
+        # Step 0: query rephraser
+        resolved_query = await rag_service._resolve_followup_query(
+            query=request.query,
+            conversation_history=request.conversation_history or []
+        )
+        
         # Step 1: Retrieve relevant context
         context_chunks = await rag_service.retrieve_context(
-            request.query, 
+            resolved_query, 
             top_k=request.top_k
         )
         
