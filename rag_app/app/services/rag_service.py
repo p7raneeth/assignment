@@ -2,6 +2,8 @@ from typing import List, Optional
 import io, os
 from openai import AsyncOpenAI
 from app.services.vector_service import vector_store
+from app.core.config import get_settings
+settings = get_settings()
 
 # In-memory storage (replace with DB later)
 VECTOR_STORE = {
@@ -39,7 +41,7 @@ class SimpleRAGService:
         # Build conversation context
         history_text = "\n".join([
             f"{msg['role'].upper()}: {msg['content']}" 
-            for msg in conversation_history[-4:]  # Last 2 exchanges (4 messages)
+            for msg in conversation_history[-settings.MAX_HISTORY_MESSAGES:]  # Last 2 exchanges (4 messages)
         ])
         
         # Ask LLM to rewrite the query if it's a follow-up

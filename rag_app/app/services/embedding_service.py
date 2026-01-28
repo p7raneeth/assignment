@@ -12,6 +12,8 @@ import uuid
 import numpy as np
 import faiss
 import pickle
+from app.core.config import get_settings
+settings = get_settings()
 
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -19,7 +21,7 @@ client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # ========== Vector Store Service ==========
 class VectorStoreService:
     def __init__(self):
-        self.dimension = 1536  # text-embedding-3-small dimension
+        self.dimension = settings.EMBEDDING_MODEL_DIM  # text-embedding-3-small dimension
         self.index = None
         self.chunks = []
         self.chunk_ids = []
@@ -56,7 +58,7 @@ class VectorStoreService:
         
         # Generate query embedding
         response = await client.embeddings.create(
-            model="text-embedding-3-small",
+            model=settings.EMBEDDING_MODEL,
             input=query
         )
         query_embedding = response.data[0].embedding

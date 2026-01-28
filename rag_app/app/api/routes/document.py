@@ -17,7 +17,9 @@ from app.schemas.document import UploadResponse
 from app.services.document_service import DocumentProcessor
 from app.services.vector_service import vector_store
 from app.services.doc_service import doc_process
+from app.core.config import get_settings
 
+settings = get_settings()
 # from app.services.embedding_service import VectorStoreService
 
 # vector_store = VectorStoreService()
@@ -36,7 +38,7 @@ async def upload_pdf(file: UploadFile = File(...)):
     The file will be processed and added to the vector store for querying.
     """
     # Validate file type
-    if not file.filename.endswith('.pdf'):
+    if not file.filename.endswith(settings.FILE_TYPE):
         raise HTTPException(status_code=400, detail="Only PDF files are supported")
     
     try:
@@ -44,8 +46,8 @@ async def upload_pdf(file: UploadFile = File(...)):
         pdf_content = await file.read()
         # print(pdf_content)
         # Validate file size (max 10MB)
-        if len(pdf_content) > 20 * 1024 * 1024:
-            raise HTTPException(status_code=400, detail="File size exceeds 10MB limit")
+        if len(pdf_content) > settings.MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail=f"File size exceeds Max File size of {settings.MAX_FILE_SIZE} limit")
         
         # Process PDF
         result = await doc_process.process_pdf(pdf_content, file.filename)

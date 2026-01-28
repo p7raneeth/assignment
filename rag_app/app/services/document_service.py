@@ -6,6 +6,10 @@ from dotenv import load_dotenv
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 load_dotenv()
 
+# In app/services/document_service.py
+from app.core.config import get_settings
+
+settings = get_settings()
 
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
@@ -13,12 +17,12 @@ client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # ========== Document Processing Service ==========
 class DocumentProcessor:
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
+        self.chunk_size = settings.CHUNK_SIZE
+        self.chunk_overlap = settings.CHUNK_OVERLAP
         # Initialize LangChain's RecursiveCharacterTextSplitter
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap,
+            chunk_size=settings.CHUNK_SIZE,
+            chunk_overlap=settings.CHUNK_OVERLAP,
             length_function=len,
             separators=["\n\n", "\n", ". ", " ", ""],  # Try to split on paragraphs, then sentences, then words
             is_separator_regex=False,
@@ -83,7 +87,7 @@ class DocumentProcessor:
     async def embed_batch(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for multiple texts"""
         response = await client.embeddings.create(
-            model="text-embedding-3-small",
+            model=settings.EMBEDDING_MODEL,
             input=texts
         )
         return [item.embedding for item in response.data]

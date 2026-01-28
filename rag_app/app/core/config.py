@@ -9,7 +9,10 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: str
     EMBEDDING_MODEL: str = "text-embedding-3-small"
+    EMBEDDING_MODEL_DIM: str = 1536
     LLM_MODEL: str = "gpt-4o"
+    TEMPERATURE : str = 0.1
+    MAX_TOKENS: str = 200
     
     # RAG Configuration
     CHUNK_SIZE: int = 1000
@@ -23,7 +26,8 @@ class Settings(BaseSettings):
     # File Upload
     UPLOAD_DIR: str = "./uploads"
     FAISS_INDEX_DIR: str = "./faiss_index"
-    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10MB
+    MAX_FILE_SIZE: int = 20 * 1024 * 1024  # 10MB
+    FILE_TYPE: str = '.pdf'
     
     class Config:
         env_file = ".env"
