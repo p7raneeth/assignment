@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200
     TOP_K_RETRIEVAL: int = 5
-    
+    HYBRID_SEARCH_ALPHA: float = 0.5
     # Conversation
     MAX_HISTORY_MESSAGES: int = 1  # Include 1 previous message
     

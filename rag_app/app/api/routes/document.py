@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, FastAPI, HTTPException, UploadFile, File
+from fastapi import APIRouter, FastAPI, HTTPException, UploadFile, File, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
@@ -39,7 +39,7 @@ async def upload_pdf(file: UploadFile = File(...)):
     """
     # Validate file type
     if not file.filename.endswith(settings.FILE_TYPE):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND , detail="Only PDF files are supported")
     
     try:
         # Read file content
@@ -47,7 +47,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         # print(pdf_content)
         # Validate file size (max 10MB)
         if len(pdf_content) > settings.MAX_FILE_SIZE:
-            raise HTTPException(status_code=400, detail=f"File size exceeds Max File size of {settings.MAX_FILE_SIZE} limit")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"File size exceeds Max File size of {settings.MAX_FILE_SIZE} limit")
         
         # Process PDF
         result = await doc_process.process_pdf(pdf_content, file.filename)
@@ -68,9 +68,9 @@ async def upload_pdf(file: UploadFile = File(...)):
         )
         
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error processing PDF: {str(e)}")
     
 stats_router = APIRouter(prefix="/api/v1/statistics", tags=["statistics"])
 @stats_router.get("/stats")

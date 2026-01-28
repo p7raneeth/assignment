@@ -1,5 +1,5 @@
 
-from fastapi import APIRouter, FastAPI, HTTPException, UploadFile, File
+from fastapi import APIRouter, FastAPI, HTTPException, UploadFile, File, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
@@ -78,7 +78,7 @@ async def query_endpoint(request: QueryRequest):
         )
         
     except openai.APIError as e:
-        raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"OpenAI API error: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error processing query: {str(e)}")
 
